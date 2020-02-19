@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css?family=Arimo&display=swap');
+
+html, body, #root{
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+body{
+    font-family: 'Arimo', sans-serif;
+    background-image: url("/knest-background.jpg");
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.app {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+  width: 100%;
+  .header {
+    background-color: #2077bc;
+    color: #fafafa;
+    font-size: 2em;
+    font-weight: bold;
+    padding: 0.5em;
+  }
+  .main {
+    flex: 1;
+    width:100%;
+
+  }
+
+  
+  .wheel-container{
+      height: 90%;
+      width: 90%;
+      margin: auto;
+  }
+}
