@@ -1,10 +1,13 @@
 import React, { Component } from 'react'
+import { Party } from './types/Party';
 
-const sections = ["שס", "ליכוד", "כחול לבן", "מרץ", "ישראל ביתנו", "העבודה-גשר-מרצ"];
 const colors = ["#2077bc", "#fafafa"];
+const SPIN_DURATION = 5000;
 
-
-export default class WheelOfFortune extends Component {
+export default class WheelOfFortune extends Component<{
+    onSelected: (partyId: string) => void,
+    items: Party[]
+}> {
     canvasRef = React.createRef<HTMLCanvasElement>();
     containerRef = React.createRef<HTMLDivElement>();
     wheels: HTMLCanvasElement[] = [];
@@ -17,8 +20,7 @@ export default class WheelOfFortune extends Component {
     innerHeight = 0;
 
     csz?: string;
-
-
+    selectedItem?: number;
 
     componentDidMount() {
         const canvas = this.canvasRef.current;
@@ -32,18 +34,21 @@ export default class WheelOfFortune extends Component {
     }
 
     setContainerSize = () => {
-        const container = this.containerRef.current;
-        if (container == null) return;
-        this.innerHeight = container.clientHeight;
-        this.innerWidth = container.clientWidth;
+        // const container = this.containerRef.current;
+        // if (container == null) return;
+        // this.innerHeight = container.clientHeight;
+        // this.innerWidth = container.clientWidth;
+        this.innerHeight = window.innerHeight;
+        this.innerWidth = window.innerWidth;
+        console.log(this.innerHeight, this.innerWidth);
         this.drawWheel();
         this.drawFrame();
         this.repaint();
     }
 
     drawWheel() {
-        const sectionsLength = sections.length;
-        // const innerHeight = window.innerHeight;
+        const sectionsLength = this.props.items.length;
+        const sections = this.props.items;
         const innerWidth = this.innerWidth;
         const innerHeight = this.innerHeight;
         const r = this.getScreenRadius();
@@ -57,6 +62,7 @@ export default class WheelOfFortune extends Component {
             g.addColorStop(0, "rgba(0,0,0,0)");
             g.addColorStop(1, "rgba(0,0,0,0.5)");
             for (let i = 0; i < sectionsLength; i++) {
+                const currentParty = sections[i];
                 let a0 = 2 * Math.PI * i / sectionsLength;
                 let a1 = a0 + 2 * Math.PI / (i == 0 ? 1 : sectionsLength);
                 let a = 2 * Math.PI * (i + 0.5) / sectionsLength;
@@ -77,14 +83,12 @@ export default class WheelOfFortune extends Component {
                     ctx.shadowColor = "#000";
                     ctx.shadowBlur = r / 100;
                 }
-                // ctx.font = "bold " + r / sections.length * 1.6 + "px serif";
-
-                ctx.font = "bold " + ((32 / 700) * innerHeight) + "px arial";
+                ctx.font = "bold " + ((32 / 700) * innerHeight) + "px Arimo";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.translate(cx, cy);
                 ctx.rotate(a);
-                ctx.fillText(sections[i], r * 0.62, 0);
+                ctx.fillText(currentParty.partyName, r * 0.62, 0);
                 ctx.restore();
             }
             newWheels.push(c);
@@ -103,7 +107,7 @@ export default class WheelOfFortune extends Component {
         ctx.shadowOffsetX = r / 80;
         ctx.shadowOffsetY = r / 80;
         ctx.shadowBlur = r / 20;
-        ctx.shadowColor = "rgba(0,0,0,0.8)";
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
         ctx.beginPath();
         ctx.arc(cx, cy, r * 1.005, 0, 2 * Math.PI, true);
         ctx.arc(cx, cy, r * 0.995, 0, 2 * Math.PI, false);
@@ -117,8 +121,8 @@ export default class WheelOfFortune extends Component {
         // g.addColorStop(1, "#811");
         // ctx.fillStyle = g;
         ctx.beginPath();
-        // ctx.arc(cx, cy, r / 3.5, 0, 2 * Math.PI, false);
-        // ctx.fill();
+        ctx.arc(cx, cy, r / 10, 0, 2 * Math.PI, false);
+        ctx.fill();
         ctx.translate(cx, cy);
         ctx.rotate(Math.PI - 0.2);
         ctx.beginPath();
@@ -130,36 +134,34 @@ export default class WheelOfFortune extends Component {
     }
 
     getScreenRadius() {
-        const innerWidth = this.innerWidth;
-        const innerHeight = this.innerHeight;
-        return Math.min(innerWidth, innerHeight) / 2.25 | 0;
+        return Math.min(this.innerWidth, this.innerHeight) / 1.5 | 0;
     }
 
     repaint() {
-        // const innerWidth = window.innerWidth;
-        // const innerHeight = window.innerHeight;
-        const innerWidth = this.innerWidth;
-        const innerHeight = this.innerHeight;
         const canvas = this.canvasRef.current;
         if (canvas == null || this.frame == null) return;
+        const sectionsLength = this.props.items.length;
+        const innerWidth = this.innerWidth;
+        const innerHeight = this.innerHeight;
         canvas.width = innerWidth;
         canvas.height = innerHeight;
-        let cx = innerWidth / 2, cy = innerHeight / 2;
+        let cx = innerWidth / 2.75,
+            cy = innerHeight / 2;
         let ctx = canvas.getContext("2d");
         if (ctx == null) return;
-        let selected = (Math.floor((- 0.2 - this.angle) * sections.length / (2 * Math.PI))
-            % sections.length);
-        if (selected < 0) selected += sections.length;
+        this.selectedItem = (Math.floor((- 0.2 - this.angle) * sectionsLength / (2 * Math.PI)) % sectionsLength);
+        if (this.selectedItem < 0) this.selectedItem += sectionsLength;
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(this.angle);
-        ctx.translate(-this.wheels[selected].width / 2, -this.wheels[selected].height / 2);
-        ctx.drawImage(this.wheels[selected], 0, 0);
+        ctx.translate(-this.wheels[this.selectedItem].width / 2, -this.wheels[this.selectedItem].height / 2);
+        ctx.drawImage(this.wheels[this.selectedItem], 0, 0);
         ctx.restore();
         ctx.drawImage(this.frame, cx - this.frame.width / 2, cy - this.frame.height / 2);
     }
 
     spin(speed: number, duration: number) {
+        const sections = this.props.items;
         let start = performance.now(),
             angle0 = this.angle;
         let animationFrame = () => {
@@ -169,30 +171,22 @@ export default class WheelOfFortune extends Component {
             this.angle = angle0 + (speed * t - 0.5 * speed * t * t) * 100;
             this.repaint();
             if (t < 1)
-                requestAnimationFrame(animationFrame);
-            else
+                window.requestAnimationFrame(animationFrame);
+            else {
                 this.running = false;
-        }
-        requestAnimationFrame(animationFrame);
-        this.running = true;
-    }
-
-
-    run() {
-        setInterval(() => {
-            const sz = window.innerWidth + "/" + window.innerHeight;
-            if (this.csz !== sz) {
-                this.csz = sz;
-                this.drawWheel();
-                this.drawFrame();
-                this.repaint();
+                if (this.selectedItem != null && sections[this.selectedItem] != null) {
+                    const selectedItem = sections[this.selectedItem];
+                    this.props.onSelected(selectedItem.partyId);
+                }
             }
-        }, 10);
+        }
+        window.requestAnimationFrame(animationFrame);
+        this.running = true;
     }
 
     start() {
         if (!this.running) {
-            this.spin(0.5 + Math.random() * 0.125, 5000);
+            this.spin(0.5 + Math.random() * 0.125, SPIN_DURATION);
         }
     };
 
